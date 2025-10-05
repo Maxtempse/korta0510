@@ -11,13 +11,23 @@ interface PositionItemProps {
 }
 
 const PositionItem: React.FC<PositionItemProps> = ({ item }) => {
+  const total = item.quantity * item.price
+  const isIncome = item.transactionType === 'Доходы'
+
   return (
-    <div className="flex items-center gap-3 py-2 px-3 rounded hover:bg-gray-50 transition-colors">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-900">{item.itemName}</p>
+    <div className="py-2 px-3 rounded hover:bg-gray-50 transition-colors">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-gray-900">{item.itemName}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-gray-600 font-medium">{item.quantity}</p>
+        </div>
       </div>
-      <div className="text-right">
-        <p className="text-sm text-gray-900">{item.quantity}</p>
+      <div className="mt-1">
+        <span className={`text-xs font-medium ${isIncome ? 'text-green-700' : 'text-red-700'}`}>
+          {isIncome ? '+' : ''} {total.toLocaleString('ru-RU')} ₽
+        </span>
       </div>
     </div>
   )

@@ -66,80 +66,89 @@ const PositionItem: React.FC<PositionItemProps> = ({
   const displayValues = isEditing ? { ...item, ...editValues } : item
   const total = displayValues.quantity * displayValues.price
 
+  const isIncome = item.transaction_type === 'Доходы'
+
   return (
     <div
-      className={`flex items-center gap-3 py-2 px-3 rounded transition-colors ${
+      className={`py-2 px-3 rounded transition-colors ${
         isLinked ? 'bg-gray-100 border border-gray-300' : 'hover:bg-gray-50 border border-transparent'
       }`}
     >
-      <div className="flex-1 min-w-0">
-        {!isLinked && isEditing ? (
-          <Input
-            value={displayValues.item_description}
-            onChange={(e) => onEdit(item.id, 'item_description', e.target.value)}
-            className="h-8 text-sm"
-          />
-        ) : (
-          <p className="text-sm text-gray-900">{displayValues.item_description}</p>
-        )}
-      </div>
-      <div className="flex items-center gap-4">
-        <div className="text-right">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
           {!isLinked && isEditing ? (
             <Input
-              type="number"
-              value={displayValues.quantity}
-              onChange={(e) => onEdit(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-              className="h-8 text-sm w-20"
+              value={displayValues.item_description}
+              onChange={(e) => onEdit(item.id, 'item_description', e.target.value)}
+              className="h-8 text-sm"
             />
           ) : (
-            <p className="text-sm text-gray-900">{displayValues.quantity}</p>
+            <p className="text-sm text-gray-900">{displayValues.item_description}</p>
           )}
         </div>
-        <div className="flex gap-1">
-          {!isLinked && (
-            <>
-              {isEditing ? (
-                <>
-                  <button
-                    onClick={() => onSave(item.id)}
-                    className="p-1 text-green-600 hover:bg-green-50 rounded"
-                    title="Сохранить"
-                  >
-                    <Save size={16} />
-                  </button>
-                  <button
-                    onClick={() => onEdit(item.id, 'item_description', item.item_description)}
-                    className="p-1 text-gray-600 hover:bg-gray-100 rounded"
-                    title="Отмена"
-                  >
-                    <X size={16} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => onEdit(item.id, 'item_description', item.item_description)}
-                    className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                    title="Редактировать"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(item.id)}
-                    className="p-1 text-red-600 hover:bg-red-50 rounded"
-                    title="Удалить"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </>
-              )}
-            </>
-          )}
-          {isLinked && (
-            <span className="text-xs text-gray-500 italic">В УПД</span>
-          )}
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            {!isLinked && isEditing ? (
+              <Input
+                type="number"
+                value={displayValues.quantity}
+                onChange={(e) => onEdit(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                className="h-8 text-sm w-20"
+              />
+            ) : (
+              <p className="text-sm text-gray-600 font-medium">{displayValues.quantity}</p>
+            )}
+          </div>
+          <div className="flex gap-1">
+            {!isLinked && (
+              <>
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={() => onSave(item.id)}
+                      className="p-1 text-green-600 hover:bg-green-50 rounded"
+                      title="Сохранить"
+                    >
+                      <Save size={16} />
+                    </button>
+                    <button
+                      onClick={() => onEdit(item.id, 'item_description', item.item_description)}
+                      className="p-1 text-gray-600 hover:bg-gray-100 rounded"
+                      title="Отмена"
+                    >
+                      <X size={16} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => onEdit(item.id, 'item_description', item.item_description)}
+                      className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                      title="Редактировать"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button
+                      onClick={() => onDelete(item.id)}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      title="Удалить"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+            {isLinked && (
+              <span className="text-xs text-gray-500 italic">В УПД</span>
+            )}
+          </div>
         </div>
+      </div>
+      <div className="mt-1">
+        <span className={`text-xs font-medium ${isIncome ? 'text-green-700' : 'text-red-700'}`}>
+          {isIncome ? '+' : ''} {total.toLocaleString('ru-RU')} ₽
+        </span>
       </div>
     </div>
   )
