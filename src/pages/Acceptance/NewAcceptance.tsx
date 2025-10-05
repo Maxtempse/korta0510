@@ -75,7 +75,7 @@ export const NewAcceptance: React.FC = () => {
               <p className="mt-4 text-gray-600">Загрузка данных...</p>
             </div>
           ) : (
-            <ReceptionPreview data={receptionData} />
+            <ReceptionPreview data={receptionData} onDataChange={setReceptionData} />
           )}
         </div>
 

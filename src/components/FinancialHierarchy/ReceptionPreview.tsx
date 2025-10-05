@@ -4,15 +4,54 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 
 interface ReceptionPreviewProps {
   data: ReceptionExcelRow[]
+  onDataChange?: (data: ReceptionExcelRow[]) => void
 }
 
 interface PositionItemProps {
   item: ReceptionExcelRow
+  onUpdate?: (updates: Partial<ReceptionExcelRow>) => void
 }
 
-const PositionItem: React.FC<PositionItemProps> = ({ item }) => {
+const PositionItem: React.FC<PositionItemProps> = ({ item, onUpdate }) => {
+  const [isEditingQuantity, setIsEditingQuantity] = useState(false)
+  const [isEditingPrice, setIsEditingPrice] = useState(false)
+  const [editQuantity, setEditQuantity] = useState(item.quantity)
+  const [editPrice, setEditPrice] = useState(item.price)
+
   const total = item.quantity * item.price
   const isIncome = item.transactionType === 'Доходы'
+
+  const handleQuantitySave = () => {
+    if (onUpdate && editQuantity !== item.quantity) {
+      onUpdate({ quantity: editQuantity })
+    }
+    setIsEditingQuantity(false)
+  }
+
+  const handlePriceSave = () => {
+    if (onUpdate && editPrice !== item.price) {
+      onUpdate({ price: editPrice })
+    }
+    setIsEditingPrice(false)
+  }
+
+  const handleQuantityKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleQuantitySave()
+    } else if (e.key === 'Escape') {
+      setEditQuantity(item.quantity)
+      setIsEditingQuantity(false)
+    }
+  }
+
+  const handlePriceKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePriceSave()
+    } else if (e.key === 'Escape') {
+      setEditPrice(item.price)
+      setIsEditingPrice(false)
+    }
+  }
 
   return (
     <div className="py-2 px-3 rounded hover:bg-gray-50 transition-colors">
@@ -21,13 +60,53 @@ const PositionItem: React.FC<PositionItemProps> = ({ item }) => {
           <p className="text-sm text-gray-900">{item.itemName}</p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-gray-600 font-medium">{item.quantity}</p>
+          {isEditingQuantity && onUpdate ? (
+            <input
+              type="number"
+              value={editQuantity}
+              onChange={(e) => setEditQuantity(parseFloat(e.target.value) || 0)}
+              onBlur={handleQuantitySave}
+              onKeyDown={handleQuantityKeyDown}
+              autoFocus
+              className="w-16 px-2 py-1 text-sm text-right border border-blue-500 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          ) : (
+            <p
+              className={`text-sm text-gray-600 font-medium ${onUpdate ? 'cursor-pointer hover:text-blue-600' : ''}`}
+              onClick={() => onUpdate && setIsEditingQuantity(true)}
+            >
+              {item.quantity}
+            </p>
+          )}
         </div>
       </div>
-      <div className="mt-1">
+      <div className="mt-1 flex items-center gap-2">
         <span className={`text-xs font-medium ${isIncome ? 'text-green-700' : 'text-red-700'}`}>
           {isIncome ? '+' : ''} {total.toLocaleString('ru-RU')} ₽
         </span>
+        {onUpdate && (
+          <span className="text-xs text-gray-400">•</span>
+        )}
+        {isEditingPrice && onUpdate ? (
+          <input
+            type="number"
+            value={editPrice}
+            onChange={(e) => setEditPrice(parseFloat(e.target.value) || 0)}
+            onBlur={handlePriceSave}
+            onKeyDown={handlePriceKeyDown}
+            autoFocus
+            className="w-24 px-2 py-1 text-xs text-right border border-blue-500 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        ) : (
+          onUpdate && (
+            <span
+              className="text-xs text-gray-500 cursor-pointer hover:text-blue-600"
+              onClick={() => setIsEditingPrice(true)}
+            >
+              {item.price.toLocaleString('ru-RU')} ₽/шт
+            </span>
+          )
+        )}
       </div>
     </div>
   )
@@ -36,9 +115,10 @@ const PositionItem: React.FC<PositionItemProps> = ({ item }) => {
 interface TransactionGroupProps {
   type: string
   items: ReceptionExcelRow[]
+  onItemUpdate?: (itemIndex: number, updates: Partial<ReceptionExcelRow>) => void
 }
 
-const TransactionGroup: React.FC<TransactionGroupProps> = ({ type, items }) => {
+const TransactionGroup: React.FC<TransactionGroupProps> = ({ type, items, onItemUpdate }) => {
   const [isExpanded, setIsExpanded] = useState(true)
 
   if (items.length === 0) return null
@@ -71,7 +151,11 @@ const TransactionGroup: React.FC<TransactionGroupProps> = ({ type, items }) => {
       {isExpanded && (
         <div className="mt-1 space-y-1 pl-4">
           {items.map((item, idx) => (
-            <PositionItem key={idx} item={item} />
+            <PositionItem
+              key={idx}
+              item={item}
+              onUpdate={onItemUpdate ? (updates) => onItemUpdate(idx, updates) : undefined}
+            />
           ))}
         </div>
       )}
@@ -82,9 +166,10 @@ const TransactionGroup: React.FC<TransactionGroupProps> = ({ type, items }) => {
 interface BaseItemGroupProps {
   baseItemName: string
   items: ReceptionExcelRow[]
+  onItemUpdate?: (itemIndex: number, updates: Partial<ReceptionExcelRow>) => void
 }
 
-const BaseItemGroup: React.FC<BaseItemGroupProps> = ({ baseItemName, items }) => {
+const BaseItemGroup: React.FC<BaseItemGroupProps> = ({ baseItemName, items, onItemUpdate }) => {
   const [isExpanded, setIsExpanded] = useState(true)
 
   const incomeItems = items.filter(item => item.transactionType === 'Доходы')
@@ -113,8 +198,22 @@ const BaseItemGroup: React.FC<BaseItemGroupProps> = ({ baseItemName, items }) =>
 
       {isExpanded && (
         <div className="mt-2 space-y-2 pl-3">
-          <TransactionGroup type="Доходы" items={incomeItems} />
-          <TransactionGroup type="Расходы" items={expenseItems} />
+          <TransactionGroup
+            type="Доходы"
+            items={incomeItems}
+            onItemUpdate={onItemUpdate ? (idx, updates) => {
+              const globalIdx = items.indexOf(incomeItems[idx])
+              onItemUpdate(globalIdx, updates)
+            } : undefined}
+          />
+          <TransactionGroup
+            type="Расходы"
+            items={expenseItems}
+            onItemUpdate={onItemUpdate ? (idx, updates) => {
+              const globalIdx = items.indexOf(expenseItems[idx])
+              onItemUpdate(globalIdx, updates)
+            } : undefined}
+          />
         </div>
       )}
     </div>
@@ -124,9 +223,10 @@ const BaseItemGroup: React.FC<BaseItemGroupProps> = ({ baseItemName, items }) =>
 interface WorkGroupProps {
   workGroup: string
   items: ReceptionExcelRow[]
+  onItemUpdate?: (itemIndex: number, updates: Partial<ReceptionExcelRow>) => void
 }
 
-const WorkGroup: React.FC<WorkGroupProps> = ({ workGroup, items }) => {
+const WorkGroup: React.FC<WorkGroupProps> = ({ workGroup, items, onItemUpdate }) => {
   const [isExpanded, setIsExpanded] = useState(true)
 
   const baseItemMap = new Map<string, ReceptionExcelRow[]>()
@@ -170,6 +270,10 @@ const WorkGroup: React.FC<WorkGroupProps> = ({ workGroup, items }) => {
               key={baseName}
               baseItemName={baseName}
               items={baseItems}
+              onItemUpdate={onItemUpdate ? (idx, updates) => {
+                const globalIdx = items.indexOf(baseItems[idx])
+                onItemUpdate(globalIdx, updates)
+              } : undefined}
             />
           ))}
         </div>
@@ -181,9 +285,10 @@ const WorkGroup: React.FC<WorkGroupProps> = ({ workGroup, items }) => {
 interface PositionGroupProps {
   positionNumber: number
   items: ReceptionExcelRow[]
+  onItemUpdate?: (itemIndex: number, updates: Partial<ReceptionExcelRow>) => void
 }
 
-const PositionGroup: React.FC<PositionGroupProps> = ({ positionNumber, items }) => {
+const PositionGroup: React.FC<PositionGroupProps> = ({ positionNumber, items, onItemUpdate }) => {
   const [isExpanded, setIsExpanded] = useState(true)
   const firstItem = items[0]
 
@@ -235,6 +340,10 @@ const PositionGroup: React.FC<PositionGroupProps> = ({ positionNumber, items }) 
               key={workGroup}
               workGroup={workGroup}
               items={workItems}
+              onItemUpdate={onItemUpdate ? (idx, updates) => {
+                const globalIdx = items.indexOf(workItems[idx])
+                onItemUpdate(globalIdx, updates)
+              } : undefined}
             />
           ))}
         </div>
@@ -243,7 +352,7 @@ const PositionGroup: React.FC<PositionGroupProps> = ({ positionNumber, items }) 
   )
 }
 
-export const ReceptionPreview: React.FC<ReceptionPreviewProps> = ({ data }) => {
+export const ReceptionPreview: React.FC<ReceptionPreviewProps> = ({ data, onDataChange }) => {
   if (data.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -265,6 +374,20 @@ export const ReceptionPreview: React.FC<ReceptionPreviewProps> = ({ data }) => {
   const sortedGroups = Array.from(motorGroups.entries()).sort(
     ([a], [b]) => a - b
   )
+
+  const handleItemUpdate = (positionNumber: number, itemIndex: number, updates: Partial<ReceptionExcelRow>) => {
+    if (!onDataChange) return
+
+    const newData = [...data]
+    const positionItems = motorGroups.get(positionNumber)!
+    const item = positionItems[itemIndex]
+    const globalIndex = newData.indexOf(item)
+
+    if (globalIndex !== -1) {
+      newData[globalIndex] = { ...newData[globalIndex], ...updates }
+      onDataChange(newData)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -295,6 +418,7 @@ export const ReceptionPreview: React.FC<ReceptionPreviewProps> = ({ data }) => {
             key={positionNumber}
             positionNumber={positionNumber}
             items={items}
+            onItemUpdate={onDataChange ? (idx, updates) => handleItemUpdate(positionNumber, idx, updates) : undefined}
           />
         ))}
       </div>
