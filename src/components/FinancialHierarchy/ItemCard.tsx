@@ -37,16 +37,18 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             <Repeat size={14} />
           </button>
           <div className="min-w-0 flex-grow">
-            <p className="text-sm text-gray-900">{item.itemName}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm text-gray-900">{item.itemName}</p>
+              <span className="text-sm text-gray-600 font-medium flex-shrink-0">{item.quantity}</span>
+            </div>
             <div className="mt-1">
               <span className="text-xs text-green-700 font-medium">
-                {formatCurrency(item.unitPrice)}
+                {item.totalAmount >= 0 ? '+' : ''} {formatCurrency(item.totalAmount)}
               </span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-          <span className="text-sm text-gray-600 font-medium">{item.quantity}</span>
+        <div className="flex items-center gap-1 ml-4 flex-shrink-0">
           <Button
             variant="icon"
             size="sm"
